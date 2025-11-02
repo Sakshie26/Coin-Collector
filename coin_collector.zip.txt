@@ -1,0 +1,67 @@
+import numpy as np
+import random
+
+GRID_SIZE = 8
+COIN_REWARD = 1
+PENALTY = -1
+MOVE_PENALTY = -0.1
+ACTIONS = [0, 1, 2, 3]  # up, down, left, right
+
+# Q-table: state (x, y) and 4 actions
+Q = np.zeros((GRID_SIZE, GRID_SIZE, len(ACTIONS)))
+
+# Learning parameters
+alpha = 0.1
+gamma = 0.9
+epsilon = 0.2
+episodes = 1000
+
+# Positions
+coin_pos = (7, 7)
+penalty_pos = [(2, 3), (5, 5)]
+
+def move(pos, action):
+    x, y = pos
+    if action == 0 and x > 0:
+        x -= 1
+    if action == 1 and x < GRID_SIZE - 1:
+        x += 1
+    if action == 2 and y > 0:
+        y -= 1
+    if action == 3 and y < GRID_SIZE - 1:
+        y += 1
+    return (x, y)
+
+for episode in range(episodes):
+    agent_pos = (0, 0)
+    while agent_pos != coin_pos:
+        if random.uniform(0, 1) < epsilon:
+            action = random.choice(ACTIONS)
+        else:
+            action = np.argmax(Q[agent_pos[0], agent_pos[1]])
+
+        new_pos = move(agent_pos, action)
+
+        if new_pos == coin_pos:
+            reward = COIN_REWARD
+        elif new_pos in penalty_pos:
+            reward = PENALTY
+        else:
+            reward = MOVE_PENALTY
+
+        Q[agent_pos[0], agent_pos[1], action] = Q[agent_pos[0], agent_pos[1], action] +             alpha * (reward + gamma * np.max(Q[new_pos[0], new_pos[1]]) - Q[agent_pos[0], agent_pos[1], action])
+
+        agent_pos = new_pos
+
+print("Training complete!")
+
+agent_pos = (0, 0)
+path = [agent_pos]
+
+while agent_pos != coin_pos:
+    action = np.argmax(Q[agent_pos[0], agent_pos[1]])
+    agent_pos = move(agent_pos, action)
+    path.append(agent_pos)
+
+print("Optimal path to coin avoiding penalties:")
+print(path)
